@@ -17,6 +17,7 @@ import {
   Stats,
 } from "webpack";
 import ts from "typescript";
+import { minify_sync } from "terser";
 
 // utils
 import { markAsUsed } from "./utils/markAsUsed";
@@ -565,7 +566,7 @@ export class ChunkReportPlugin {
     );
     fs.mkdirSync(chunkDataMapOutputDirectory, { recursive: true });
     fs.writeFileSync(chunkDataMapOutputFile, chunkDataMapJSON, "utf-8");
-    const content = `window.CHUNK_DATA = ${chunkDataMapJSON};`;
+    const content = minify_sync(`window.CHUNK_DATA = ${chunkDataMapJSON};`).code || "";
     await addScriptToHtml(content, htmlOutputFile);
     if (this.emitChunkIdVsModuleData) {
       const chunkIdVsModuleDataJSON = JSON.stringify(

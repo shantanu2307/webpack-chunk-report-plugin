@@ -21,9 +21,7 @@ export function createWebpackConfig(
   return hocs.reduce((config, hoc) => hoc(config), baseConfig);
 }
 
-export function withChunkReportPlugin(
-  options: Options = {},
-): WebpackConfigHOC {
+export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
   return (config: Configuration, context?: Record<string, any>) => {
     const {
       enabled,
