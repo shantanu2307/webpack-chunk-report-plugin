@@ -6,6 +6,8 @@ import type {
   GraphData,
   GraphNode,
 } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
+import { Tooltip } from "./Tooltip";
+
 
 interface ModuleDependenciesProps {
   selectedNode: GraphNode | null;
@@ -32,31 +34,50 @@ const EmptyDependency = memo(() => {
 const Dependencies: FC<
   Omit<ModuleDependenciesProps, "selectedNode"> & { selectedNode: GraphNode }
 > = memo(({ selectedNode, graphData, onNodeSelect }) => {
-  // Find what this node imports (dependencies)
-  const dependencies = useMemo(
-    () =>
-      graphData.links
-        .filter(link => link.source === selectedNode.id)
-        .map(link => ({
-          link,
-          node: graphData.nodes.find(n => n.id === link.target)!,
-        }))
-        .filter(item => item.node),
-    [graphData.links, graphData.nodes, selectedNode.id],
-  );
+  
+const dependencies = useMemo(() => {
+  const seen = new Set<string>();
+  return graphData.links
+    .filter(link => link.source === selectedNode.id)
+    .map(link => {
+      const node = graphData.nodes.find(n => n.id === link.target);
+      return node ? { link, node } : null;
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        link: (typeof graphData.links)[number];
+        node: (typeof graphData.nodes)[number];
+      } => {
+        if (!item || seen.has(item.node.id)) return false;
+        seen.add(item.node.id);
+        return true;
+      }
+    );
+}, [graphData, selectedNode.id]);
 
-  // Find what imports this node (dependents)
-  const dependents = useMemo(
-    () =>
-      graphData.links
-        .filter(link => link.target === selectedNode.id)
-        .map(link => ({
-          link,
-          node: graphData.nodes.find(n => n.id === link.source)!,
-        }))
-        .filter(item => item.node),
-    [graphData.links, graphData.nodes, selectedNode.id],
-  );
+const dependents = useMemo(() => {
+  const seen = new Set<string>();
+  return graphData.links
+    .filter(link => link.target === selectedNode.id)
+    .map(link => {
+      const node = graphData.nodes.find(n => n.id === link.source);
+      return node ? { link, node } : null;
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        link: (typeof graphData.links)[number];
+        node: (typeof graphData.nodes)[number];
+      } => {
+        if (!item || seen.has(item.node.id)) return false;
+        seen.add(item.node.id);
+        return true;
+      }
+    );
+}, [graphData, selectedNode.id]);
 
   const isModule = selectedNode.type === "module";
   const data = selectedNode.data as Module | Chunk;
@@ -75,9 +96,13 @@ const Dependencies: FC<
             <h3 className="text-lg font-semibold text-gray-900 truncate">
               {isModule ? "Module Details" : "Chunk Details"}
             </h3>
-            <p className="text-sm text-gray-600 text-wrap">
-              {isModule ? (data as Module).fileName : selectedNode.id}
-            </p>
+            <Tooltip
+              content={isModule ? (data as Module).fileName : selectedNode.id}
+            >
+              <p className="text-sm text-gray-600 text-wrap truncate">
+                {isModule ? (data as Module).fileName : selectedNode.id}
+              </p>
+            </Tooltip>
           </div>
         </div>
 
@@ -97,6 +122,12 @@ const Dependencies: FC<
               </span>
             </div>
           )}
+          <div>
+            <span className="font-medium text-gray-700">Stat Size:</span>
+            <span className="ml-2 text-gray-600">
+              {formatBytes(data.statSize || 0)}
+            </span>
+          </div>
           <div>
             <span className="font-medium text-gray-700">Parsed Size:</span>
             <span className="ml-2 text-gray-600">
@@ -179,11 +210,12 @@ const Dependencies: FC<
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {node.type === "chunk"
-                        ? node.id
-                        : (node.data as Module).fileName.split("/").pop()}
-                    </p>
+                    <Tooltip content={node.id}>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {node.id}
+                      </p>
+                    </Tooltip>
+
                     {link.reason && (
                       <p className="text-xs text-gray-500 truncate">
                         {link.reason.type}: {link.reason.explanation}
@@ -228,11 +260,11 @@ const Dependencies: FC<
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {node.type === "chunk"
-                        ? node.id
-                        : (node.data as Module).fileName.split("/").pop()}
-                    </p>
+                    <Tooltip content={node.id}>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {node.id}
+                      </p>
+                    </Tooltip>
                     {link.reason && (
                       <p className="text-xs text-gray-500 truncate">
                         {link.reason.type}: {link.reason.explanation}

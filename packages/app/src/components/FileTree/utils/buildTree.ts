@@ -22,21 +22,18 @@ export const buildTree = (graphData: GraphData): TreeNode => {
   const folderMap = new Map<string, TreeNode>();
   folderMap.set("", root);
 
-  // Helper function to check if path has an extension
   const hasExtension = (fileName: string): boolean => {
     const lastDotIndex = fileName.lastIndexOf(".");
     const lastSlashIndex = fileName.lastIndexOf("/");
     return lastDotIndex > -1 && lastDotIndex > lastSlashIndex;
   };
 
-  // Helper function to get file type
   const getFileType = (fileName: string): string => {
     if (!hasExtension(fileName)) return "unknown";
     const ext = fileName.split(".").pop()?.toLowerCase() || "";
     return TYPE_MAP[ext] || "unknown";
   };
 
-  // Create folder structure
   const createFolderPath = (path: string): TreeNode => {
     if (folderMap.has(path)) {
       return folderMap.get(path)!;
@@ -69,10 +66,11 @@ export const buildTree = (graphData: GraphData): TreeNode => {
       parentFolder = folderMap.get(newPath)!;
       currentPath = newPath;
     }
+
     return parentFolder;
   };
 
-  // Add chunks first
+  // Add chunk nodes
   graphData.nodes
     .filter(node => node.type === "chunk")
     .forEach(node => {
@@ -93,7 +91,7 @@ export const buildTree = (graphData: GraphData): TreeNode => {
       root.children.push(chunkNode);
     });
 
-  // Add modules
+  // Add module nodes
   graphData.nodes
     .filter(node => node.type === "module")
     .forEach(node => {
@@ -107,9 +105,7 @@ export const buildTree = (graphData: GraphData): TreeNode => {
       const parentFolder = createFolderPath(folderPath);
       const fileType = getFileType(module.fileName);
 
-      // Only add as file if it has an extension
       if (hasExtension(module.fileName)) {
-        // Find what imports this module
         const importedBy = graphData.links
           .filter(link => link.target === node.id)
           .map(link => link.source);
@@ -128,16 +124,10 @@ export const buildTree = (graphData: GraphData): TreeNode => {
           isCommonJS: module.isCommonJS,
           fileType,
         };
-
         parentFolder.children.push(fileNode);
-      } else {
-        // Add as folder if no extension
-        const folderNode = createFolderPath(module.fileName);
-        folderNode.node = node;
       }
     });
 
-  // Calculate folder sizes
   const calculateFolderSizes = (node: TreeNode): void => {
     if (node.type === "folder") {
       node.statSize = 0;
@@ -151,6 +141,20 @@ export const buildTree = (graphData: GraphData): TreeNode => {
       });
     }
   };
+
+  const dedupeChildren = (node: TreeNode): void => {
+    const seen = new Set<string>();
+    node.children = node.children.filter(child => {
+      if (seen.has(child.id)) return false;
+      seen.add(child.id);
+      return true;
+    });
+
+    node.children.forEach(dedupeChildren);
+  };
+
   calculateFolderSizes(root);
+  dedupeChildren(root);
+
   return root;
 };
