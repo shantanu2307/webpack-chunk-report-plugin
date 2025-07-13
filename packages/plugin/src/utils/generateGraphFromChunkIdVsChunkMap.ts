@@ -1,3 +1,4 @@
+import _uniq from 'lodash/uniq'
 import type { Module, Chunk, Reason } from "../types";
 
 export type GraphNode = {
@@ -121,5 +122,10 @@ export function generateGraphFromChunkIdVsChunkMap(
     });
   });
 
-  return { nodes, links };
+   const graphNodes = nodes.map(node => ({
+     ...node,
+     dependencies: _uniq(node.dependencies ??[]),
+   }));
+
+  return { nodes: graphNodes, links };
 }
