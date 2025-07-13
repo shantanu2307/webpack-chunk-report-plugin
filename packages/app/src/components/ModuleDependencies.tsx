@@ -1,8 +1,8 @@
 import { memo, FC, useMemo } from "react";
-import { GraphData, GraphNode } from "../types/graph";
 import { formatBytes } from "../utils/graphUtils";
 import { ArrowRight, Package, File, ExternalLink } from "lucide-react";
 import type { Module, Chunk } from "@plugin/types";
+import type { GraphData, GraphNode } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 
 interface ModuleDependenciesProps {
   selectedNode: GraphNode | null;

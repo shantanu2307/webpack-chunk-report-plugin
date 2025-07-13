@@ -1,5 +1,5 @@
 // types
-import type { GraphData } from "../../../types/graph";
+import type { GraphData } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 import type { TreeNode } from "../types";
 import type { Module, Chunk } from "@plugin/types";
 

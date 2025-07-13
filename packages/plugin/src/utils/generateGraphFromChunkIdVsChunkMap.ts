@@ -1,24 +1,24 @@
 import type { Module, Chunk, Reason } from "../types";
 
-type GraphNode = {
+export type GraphNode = {
   id: string;
   type: "module" | "chunk";
   data: Module | Chunk;
   dependencies: string[];
 };
 
-type GraphLink = {
+export type GraphLink = {
   source: string;
   target: string;
   reason?: Reason;
 };
 
-type GraphData = {
+export type GraphData = {
   nodes: GraphNode[];
   links: GraphLink[];
 };
 
-type ChunkIdVsChunkMap = Record<string, Chunk>;
+export type ChunkIdVsChunkMap = Record<string, Chunk>;
 
 export function generateGraphFromChunkIdVsChunkMap(
   chunkIdVsChunkMap: ChunkIdVsChunkMap,

@@ -1,4 +1,4 @@
-import type { GraphNode } from "../types/graph";
+import type { GraphNode } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 import type { Module } from "@plugin/types";
 
 export function formatBytes(bytes: number): string {

@@ -1,8 +1,11 @@
 import { useCallback, useState } from "react";
 import { FileTree } from "./components/FileTree/FileTree";
 import { ModuleDependencies } from "./components/ModuleDependencies";
-import { GraphData, GraphNode } from "./types/graph";
-import { generateGraphFromChunkIdVsChunkMap } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
+import {
+  GraphData,
+  GraphNode,
+  generateGraphFromChunkIdVsChunkMap,
+} from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 
 import { FileText } from "lucide-react";
 
