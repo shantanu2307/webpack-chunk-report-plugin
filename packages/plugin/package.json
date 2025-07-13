@@ -1,0 +1,51 @@
+{
+  "name": "webpack-chunk-report-plugin",
+  "version": "6.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webpack",
+    "config",
+    "chunks",
+    "module",
+    "gzip size",
+    "parsed size",
+    "production",
+    "stat size",
+    "treeshaking",
+    "lazy",
+    "preloaded",
+    "prefetched",
+    "configuration"
+  ],
+  "author": "shantanugoyal23@gmail.com",
+  "license": "ISC",
+  "description": "Webpack Chunk Report Plugin",
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^24.0.10",
+    "@types/webpack": "^5.28.5",
+    "@types/webpack-bundle-analyzer": "^4.7.0",
+    "@types/webpack-merge": "^5.0.0"
+  },
+  "dependencies": {
+    "cjs-module-lexer": "^2.1.0",
+    "jsdom": "^26.1.0",
+    "lodash": "^4.17.21",
+    "typescript": "^5.8.3",
+    "webpack": "^5.0.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-merge": "^6.0.1"
+  },
+  "peerDependencies": {
+    "webpack": "^5.0.0"
+  }
+}

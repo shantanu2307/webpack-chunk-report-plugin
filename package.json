@@ -1,0 +1,12 @@
+{
+  "name": "chunk-analyser",
+  "version": "1.0.0", 
+  "private": true,
+  "workspaces": ["packages/*"],
+   "scripts": {
+    "build": "yarn workspace report-visualiser build && yarn workspace webpack-chunk-report-plugin build",
+    "postbuild":"sh build.sh",
+    "publish:plugin": "yarn workspace webpack-chunk-report-plugin publish --access public",
+    "tsc": "tsc --build --noEmit"
+  }
+}
