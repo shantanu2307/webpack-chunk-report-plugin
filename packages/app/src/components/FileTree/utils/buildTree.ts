@@ -6,7 +6,7 @@ import type { Module, Chunk } from "@plugin/types";
 // constants
 import { TYPE_MAP } from "../constants";
 
-export const buildTree = (graphData: GraphData): TreeNode => {
+export const buildTree = (graphData: GraphData, chunkMode: boolean): TreeNode => {
   const root: TreeNode = {
     id: "root",
     name: "Bundle Root",
@@ -70,64 +70,67 @@ export const buildTree = (graphData: GraphData): TreeNode => {
     return parentFolder;
   };
 
-  // Add chunk nodes
-  graphData.nodes
-    .filter(node => node.type === "chunk")
-    .forEach(node => {
-      const chunk = node.data as Chunk;
-      const chunkNode: TreeNode = {
-        id: node.id,
-        name: `Chunk: ${node.id}`,
-        path: node.id,
-        type: "chunk",
-        gzipSize: chunk.gzipSize || 0,
-        statSize: chunk.statSize || 0,
-        parsedSize: chunk.parsedSize || 0,
-        children: [],
-        node,
-        importedBy: [],
-        fileType: "chunk",
-      };
-      root.children.push(chunkNode);
-    });
-
-  // Add module nodes
-  graphData.nodes
-    .filter(node => node.type === "module")
-    .forEach(node => {
-      const module = node.data as Module;
-      if (!module.fileName) return;
-
-      const pathParts = module.fileName.split("/");
-      const fileName = pathParts.pop() || module.fileName;
-      const folderPath = pathParts.join("/");
-
-      const parentFolder = createFolderPath(folderPath);
-      const fileType = getFileType(module.fileName);
-
-      if (hasExtension(module.fileName)) {
-        const importedBy = graphData.links
-          .filter(link => link.target === node.id)
-          .map(link => link.source);
-
-        const fileNode: TreeNode = {
+  if(chunkMode){
+    // Add chunk nodes
+    graphData.nodes
+      .filter(node => node.type === "chunk")
+      .forEach(node => {
+        const chunk = node.data as Chunk;
+        const chunkNode: TreeNode = {
           id: node.id,
-          name: fileName,
-          path: module.fileName,
-          type: "file",
-          parsedSize: module.parsedSize || 0,
-          gzipSize: module.gzipSize || 0,
-          statSize: module.statSize || 0,
+          name: `Chunk: ${node.id}`,
+          path: node.id,
+          type: "chunk",
+          gzipSize: chunk.gzipSize || 0,
+          statSize: chunk.statSize || 0,
+          parsedSize: chunk.parsedSize || 0,
           children: [],
           node,
-          importedBy,
-          isCommonJS: module.isCommonJS,
-          fileType,
+          importedBy: [],
+          fileType: "chunk",
         };
-        parentFolder.children.push(fileNode);
-      }
-    });
+        root.children.push(chunkNode);
+      });
+  }
+  else{
+    // Add module nodes
+    graphData.nodes
+      .filter(node => node.type === "module")
+      .forEach(node => {
+        const module = node.data as Module;
+        if (!module.fileName) return;
 
+        const pathParts = module.fileName.split("/");
+        const fileName = pathParts.pop() || module.fileName;
+        const folderPath = pathParts.join("/");
+
+        const parentFolder = createFolderPath(folderPath);
+        const fileType = getFileType(module.fileName);
+
+        if (hasExtension(module.fileName)) {
+          const importedBy = graphData.links
+            .filter(link => link.target === node.id)
+            .map(link => link.source);
+
+          const fileNode: TreeNode = {
+            id: node.id,
+            name: fileName,
+            path: module.fileName,
+            type: "file",
+            parsedSize: module.parsedSize || 0,
+            gzipSize: module.gzipSize || 0,
+            statSize: module.statSize || 0,
+            children: [],
+            node,
+            importedBy,
+            isCommonJS: module.isCommonJS,
+            fileType,
+          };
+          parentFolder.children.push(fileNode);
+        }
+      });
+  }
+  
   const calculateFolderSizes = (node: TreeNode): void => {
     if (node.type === "folder") {
       node.statSize = 0;
@@ -155,6 +158,5 @@ export const buildTree = (graphData: GraphData): TreeNode => {
 
   calculateFolderSizes(root);
   dedupeChildren(root);
-
   return root;
 };

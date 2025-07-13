@@ -34,17 +34,17 @@ export const FileTree: React.FC<FileTreeProps> = ({
   selectedNodeId,
 }) => {
   // wrapper
-  const [tree] = useState(() => buildTree(graphData));
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
     new Set(["root"]),
   );
-
+  
   // states
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
-  const [filterBy, setFilterBy] = useState<FilterOption>("all");
+  const [filterBy, setFilterBy] = useState<FilterOption>("module");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
+  
+  const tree = useMemo(() => buildTree(graphData, filterBy==="chunk" ), [graphData, filterBy]);
   const adaptedTree = useMemo(
     () => adaptTree({ tree, searchTerm, sortBy, filterBy, sortDirection }),
     [tree, sortBy, filterBy, sortDirection, searchTerm],
@@ -136,7 +136,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                   {node.importedBy.length} deps
                 </span>
               )}
-              <span className="font-mono">{formatBytes(node.gzipSize)}</span>
+              <span className="font-mono">{formatBytes(node.statSize)}</span>
             </div>
           </div>
 
@@ -194,7 +194,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
               onChange={e => setFilterBy(e.target.value as FilterOption)}
               className="appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
             >
-              <option value="all">All Files</option>
               <option value="chunk">Chunks Only</option>
               <option value="module">Modules Only</option>
               <option value="commonjs">CommonJS</option>
@@ -216,7 +215,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
           <div>
             <span className="font-medium text-gray-700">Total Size:</span>
             <span className="ml-1 text-gray-600">
-              {formatBytes(adaptedTree.gzipSize || 0)}
+              {formatBytes(adaptedTree.statSize || 0)}
             </span>
           </div>
           <div>

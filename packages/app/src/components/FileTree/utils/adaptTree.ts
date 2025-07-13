@@ -27,7 +27,7 @@ export const adaptTree = ({
 
     // Apply type filter
     let matchesFilter = true;
-    if (filterBy && filterBy !== "all") {
+    if (filterBy) {
       if (filterBy === "commonjs") {
         matchesFilter = node.isCommonJS === true;
       } else if (filterBy === "chunk") {
@@ -124,6 +124,7 @@ export const adaptTree = ({
       });
     }
   };
+
   calculateFolderSizes(filteredTree);
 
   return filteredTree;
