@@ -21,11 +21,11 @@ import ts from "typescript";
 // utils
 import { markAsUsed } from "./utils/markAsUsed";
 import { isTargetChunk } from "./utils/isTargetChunk";
+import { addScriptToHtml } from "./utils/addScript";
 
 // types
 import type { DisableTreeShaking } from "./utils/types";
 import type { RequireKeys, Module, Chunk, Datum, Reason } from "./types";
-import { addScriptToHtml } from "./utils/addScript";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -559,7 +559,6 @@ export class ChunkReportPlugin {
       chunkDataMapOutputDirectory,
       `${this.runtime}.html`,
     );
-
 
     fs.mkdirSync(chunkDataMapOutputDirectory, { recursive: true });
     const content = `window.CHUNK_DATA = ${chunkDataMapJSON};`;

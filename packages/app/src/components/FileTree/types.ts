@@ -1,4 +1,7 @@
-import type { GraphData, GraphNode } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
+import type {
+  GraphData,
+  GraphNode,
+} from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 
 export interface FileTreeProps {
   graphData: GraphData;
