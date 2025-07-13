@@ -5,6 +5,7 @@ import type { Module, Chunk } from "@plugin/types";
 import type {
   GraphData,
   GraphNode,
+  GraphLink
 } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 
 interface ModuleDependenciesProps {
@@ -33,30 +34,37 @@ const Dependencies: FC<
   Omit<ModuleDependenciesProps, "selectedNode"> & { selectedNode: GraphNode }
 > = memo(({ selectedNode, graphData, onNodeSelect }) => {
   // Find what this node imports (dependencies)
-  const dependencies = useMemo(
-    () =>
-      graphData.links
-        .filter(link => link.source === selectedNode.id)
-        .map(link => ({
-          link,
-          node: graphData.nodes.find(n => n.id === link.target)!,
-        }))
-        .filter(item => item.node),
-    [graphData.links, graphData.nodes, selectedNode.id],
-  );
+  const dependencies = useMemo(() => {
+    const links = graphData.links.filter(
+      link => link.source === selectedNode.id,
+    );
+    const uniqueNodes = new Map<string, { link: GraphLink; node: GraphNode }>();
 
-  // Find what imports this node (dependents)
-  const dependents = useMemo(
-    () =>
-      graphData.links
-        .filter(link => link.target === selectedNode.id)
-        .map(link => ({
-          link,
-          node: graphData.nodes.find(n => n.id === link.source)!,
-        }))
-        .filter(item => item.node),
-    [graphData.links, graphData.nodes, selectedNode.id],
-  );
+    links.forEach(link => {
+      const node = graphData.nodes.find(n => n.id === link.target);
+      if (node && !uniqueNodes.has(node.id)) {
+        uniqueNodes.set(node.id, { link, node });
+      }
+    });
+
+    return Array.from(uniqueNodes.values());
+  }, [graphData.links, graphData.nodes, selectedNode.id]);
+
+  const dependents = useMemo(() => {
+    const links = graphData.links.filter(
+      link => link.target === selectedNode.id,
+    );
+    const uniqueNodes = new Map<string, { link: GraphLink; node: GraphNode }>();
+
+    links.forEach(link => {
+      const node = graphData.nodes.find(n => n.id === link.source);
+      if (node && !uniqueNodes.has(node.id)) {
+        uniqueNodes.set(node.id, { link, node });
+      }
+    });
+
+    return Array.from(uniqueNodes.values());
+  }, [graphData.links, graphData.nodes, selectedNode.id]);
 
   const isModule = selectedNode.type === "module";
   const data = selectedNode.data as Module | Chunk;
