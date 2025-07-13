@@ -1,13 +1,30 @@
-import { memo, FC, useMemo } from "react";
-import { formatBytes } from "../utils/graphUtils";
+// libs
+import {
+  memo,
+  FC,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { VariableSizeList } from "react-window";
 import { ArrowRight, Package, File, ExternalLink } from "lucide-react";
+
+// components
+import { Tooltip } from "./Tooltip";
+
+// utils
+import { formatBytes } from "../utils/graphUtils";
+
+// types
 import type { Module, Chunk } from "@plugin/types";
 import type {
   GraphData,
+  GraphLink,
   GraphNode,
 } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
-import { Tooltip } from "./Tooltip";
-
 
 interface ModuleDependenciesProps {
   selectedNode: GraphNode | null;
@@ -31,53 +48,231 @@ const EmptyDependency = memo(() => {
   );
 });
 
+const ListItem = memo(
+  ({
+    data,
+    index,
+    style,
+  }: {
+    data: {
+      items: { link: GraphLink; node: GraphNode }[];
+      onNodeSelect: (node: GraphNode) => void;
+    };
+    index: number;
+    style: React.CSSProperties;
+  }) => {
+    const { items, onNodeSelect } = data;
+    const { link, node } = items[index];
+
+    return (
+      <div
+        style={style}
+        className="flex items-center gap-3 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+        onClick={() => onNodeSelect(node)}
+      >
+        {node.type === "chunk" ? (
+          <Package className="w-4 h-4 text-purple-600 flex-shrink-0" />
+        ) : (
+          <File className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        )}
+
+        <div className="flex-1 min-w-0">
+          <Tooltip content={node.id}>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {node.id}
+            </p>
+          </Tooltip>
+
+          {link.reason && (
+            <p className="text-xs text-gray-500 truncate">
+              {link.reason.type}: {link.reason.explanation}
+            </p>
+          )}
+        </div>
+
+        <div className="text-xs text-gray-500 flex-shrink-0">
+          {formatBytes(node.data.gzipSize || 0)}
+        </div>
+
+        <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
+      </div>
+    );
+  },
+);
+
+const ListItemWrapper = memo(
+  ({
+    data,
+    index,
+    setSize,
+  }: {
+    data: {
+      items: { link: GraphLink; node: GraphNode }[];
+      onNodeSelect: (node: GraphNode) => void;
+    };
+    index: number;
+    setSize: (index: number, size: number) => void;
+  }) => {
+    const rowRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (rowRef.current) {
+        setSize(index, rowRef.current.clientHeight);
+      }
+    }, [index, setSize]);
+
+    return (
+      <div ref={rowRef}>
+        <ListItem data={data} index={index} style={{}} />
+      </div>
+    );
+  },
+);
+
+const VirtualizedList = ({
+  items,
+  onNodeSelect,
+}: {
+  items: { link: GraphLink; node: GraphNode }[];
+  onNodeSelect: (node: GraphNode) => void;
+}) => {
+  const listRef = useRef<VariableSizeList>(null);
+  const sizeMap = useRef<{ [index: number]: number }>({});
+
+  const setSize = useCallback((index: number, size: number) => {
+    sizeMap.current = { ...sizeMap.current, [index]: size };
+    listRef.current?.resetAfterIndex(index);
+  }, []);
+
+  const getSize = useCallback((index: number) => {
+    return sizeMap.current[index] || 60; // Default height
+  }, []);
+
+  return (
+    <AutoSizer>
+      {({ height, width }) => (
+        // @ts-expect-error --- Can use here
+        <VariableSizeList
+          ref={listRef}
+          height={height}
+          width={width}
+          itemCount={items.length}
+          itemSize={getSize}
+          itemData={{ items, onNodeSelect }}
+        >
+          {({ data, index, style ,}) => (
+            <div style={style}>
+              <ListItemWrapper data={data} index={index} setSize={setSize} />
+            </div>
+          )}
+        </VariableSizeList>
+      )}
+    </AutoSizer>
+  );
+};
+
+// Virtualized component for exports tags
+const VirtualizedExports = ({
+  exports,
+  color = "green",
+}: {
+  exports: string[];
+  color?: string;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleItems, setVisibleItems] = useState(exports);
+  const [sliceIndex, setSliceIndex] = useState(20); // Initial number of items to show
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        // Calculate how many items can fit based on container width
+        const containerWidth = containerRef.current.clientWidth;
+        const approxItemWidth = 100; // Approximate width of each tag
+        const newSliceIndex = Math.max(
+          10,
+          Math.floor(containerWidth / approxItemWidth) * 2,
+        );
+        setSliceIndex(Math.min(newSliceIndex, exports.length));
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [exports.length]);
+
+  useEffect(() => {
+    setVisibleItems(exports.slice(0, sliceIndex));
+  }, [exports, sliceIndex]);
+
+  const showMore = exports.length > visibleItems.length;
+
+  return (
+    <div ref={containerRef} className="flex flex-wrap gap-1">
+      {visibleItems.map((exp, idx) => (
+        <span
+          key={idx}
+          className={`px-2 py-1 bg-${color}-100 text-${color}-800 rounded text-xs`}
+        >
+          {exp}
+        </span>
+      ))}
+      {showMore && (
+        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+          +{exports.length - visibleItems.length} more
+        </span>
+      )}
+    </div>
+  );
+};
+
 const Dependencies: FC<
   Omit<ModuleDependenciesProps, "selectedNode"> & { selectedNode: GraphNode }
 > = memo(({ selectedNode, graphData, onNodeSelect }) => {
-  
-const dependencies = useMemo(() => {
-  const seen = new Set<string>();
-  return graphData.links
-    .filter(link => link.source === selectedNode.id)
-    .map(link => {
-      const node = graphData.nodes.find(n => n.id === link.target);
-      return node ? { link, node } : null;
-    })
-    .filter(
-      (
-        item
-      ): item is {
-        link: (typeof graphData.links)[number];
-        node: (typeof graphData.nodes)[number];
-      } => {
-        if (!item || seen.has(item.node.id)) return false;
-        seen.add(item.node.id);
-        return true;
-      }
-    );
-}, [graphData, selectedNode.id]);
+  const dependencies = useMemo(() => {
+    const seen = new Set<string>();
+    return graphData.links
+      .filter(link => link.source === selectedNode.id)
+      .map(link => {
+        const node = graphData.nodes.find(n => n.id === link.target);
+        return node ? { link, node } : null;
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          link: (typeof graphData.links)[number];
+          node: (typeof graphData.nodes)[number];
+        } => {
+          if (!item || seen.has(item.node.id)) return false;
+          seen.add(item.node.id);
+          return true;
+        },
+      );
+  }, [graphData, selectedNode.id]);
 
-const dependents = useMemo(() => {
-  const seen = new Set<string>();
-  return graphData.links
-    .filter(link => link.target === selectedNode.id)
-    .map(link => {
-      const node = graphData.nodes.find(n => n.id === link.source);
-      return node ? { link, node } : null;
-    })
-    .filter(
-      (
-        item
-      ): item is {
-        link: (typeof graphData.links)[number];
-        node: (typeof graphData.nodes)[number];
-      } => {
-        if (!item || seen.has(item.node.id)) return false;
-        seen.add(item.node.id);
-        return true;
-      }
-    );
-}, [graphData, selectedNode.id]);
+  const dependents = useMemo(() => {
+    const seen = new Set<string>();
+    return graphData.links
+      .filter(link => link.target === selectedNode.id)
+      .map(link => {
+        const node = graphData.nodes.find(n => n.id === link.source);
+        return node ? { link, node } : null;
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          link: (typeof graphData.links)[number];
+          node: (typeof graphData.nodes)[number];
+        } => {
+          if (!item || seen.has(item.node.id)) return false;
+          seen.add(item.node.id);
+          return true;
+        },
+      );
+  }, [graphData, selectedNode.id]);
 
   const isModule = selectedNode.type === "module";
   const data = selectedNode.data as Module | Chunk;
@@ -149,33 +344,21 @@ const dependents = useMemo(() => {
               {(data as Module).exports.length > 0 && (
                 <div>
                   <span className="font-medium text-gray-700">Exports:</span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {(data as Module).exports.map((exp, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs"
-                      >
-                        {exp}
-                      </span>
-                    ))}
+                  <div className="mt-1">
+                    <VirtualizedExports exports={(data as Module).exports} />
                   </div>
                 </div>
               )}
-
               {(data as Module).treeShakenExports.length > 0 && (
                 <div>
                   <span className="font-medium text-gray-700">
                     Tree Shaken:
                   </span>
-                  <div className="mt-1 flex flex-wrap gap-1" style={LIST_STYLE}>
-                    {(data as Module).treeShakenExports.map((exp, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs"
-                      >
-                        {exp}
-                      </span>
-                    ))}
+                  <div className="mt-1">
+                    <VirtualizedExports
+                      exports={(data as Module).treeShakenExports}
+                      color="red"
+                    />
                   </div>
                 </div>
               )}
@@ -196,40 +379,11 @@ const dependents = useMemo(() => {
           {dependencies.length === 0 ? (
             <p className="text-sm text-gray-500 italic">No dependencies</p>
           ) : (
-            <div className="space-y-2" style={LIST_STYLE}>
-              {dependencies.map(({ link, node }, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onNodeSelect(node)}
-                >
-                  {node.type === "chunk" ? (
-                    <Package className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  ) : (
-                    <File className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <Tooltip content={node.id}>
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {node.id}
-                      </p>
-                    </Tooltip>
-
-                    {link.reason && (
-                      <p className="text-xs text-gray-500 truncate">
-                        {link.reason.type}: {link.reason.explanation}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="text-xs text-gray-500 flex-shrink-0">
-                    {formatBytes(node.data.gzipSize || 0)}
-                  </div>
-
-                  <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                </div>
-              ))}
+            <div style={{ height: "250px" }}>
+              <VirtualizedList
+                items={dependencies}
+                onNodeSelect={onNodeSelect}
+              />
             </div>
           )}
         </div>
@@ -246,39 +400,8 @@ const dependents = useMemo(() => {
               Not imported by any modules
             </p>
           ) : (
-            <div className="space-y-2" style={LIST_STYLE}>
-              {dependents.map(({ link, node }, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onNodeSelect(node)}
-                >
-                  {node.type === "chunk" ? (
-                    <Package className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  ) : (
-                    <File className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <Tooltip content={node.id}>
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {node.id}
-                      </p>
-                    </Tooltip>
-                    {link.reason && (
-                      <p className="text-xs text-gray-500 truncate">
-                        {link.reason.type}: {link.reason.explanation}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="text-xs text-gray-500 flex-shrink-0">
-                    {formatBytes(node.data.gzipSize || 0)}
-                  </div>
-
-                  <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                </div>
-              ))}
+            <div style={{ height: "250px" }}>
+              <VirtualizedList items={dependents} onNodeSelect={onNodeSelect} />
             </div>
           )}
         </div>

@@ -37,14 +37,19 @@ export const FileTree: React.FC<FileTreeProps> = ({
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
     new Set(["root"]),
   );
-  
+
   // states
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [filterBy, setFilterBy] = useState<FilterOption>("module");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  
-  const tree = useMemo(() => buildTree(graphData, filterBy==="chunk" ), [graphData, filterBy]);
+  const chunKMode = filterBy === "chunk";
+
+  const tree = useMemo(
+    () => buildTree(graphData, chunKMode),
+    [graphData, chunKMode],
+  );
+
   const adaptedTree = useMemo(
     () => adaptTree({ tree, searchTerm, sortBy, filterBy, sortDirection }),
     [tree, sortBy, filterBy, sortDirection, searchTerm],
@@ -194,8 +199,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
               onChange={e => setFilterBy(e.target.value as FilterOption)}
               className="appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
             >
-              <option value="chunk">Chunks Only</option>
               <option value="module">Modules Only</option>
+              <option value="chunk">Chunks Only</option>
               <option value="commonjs">CommonJS</option>
               <option value="large">Large Files (&gt;1KB Gzipped)</option>
             </select>

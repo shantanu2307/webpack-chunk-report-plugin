@@ -6,7 +6,10 @@ import type { Module, Chunk } from "@plugin/types";
 // constants
 import { TYPE_MAP } from "../constants";
 
-export const buildTree = (graphData: GraphData, chunkMode: boolean): TreeNode => {
+export const buildTree = (
+  graphData: GraphData,
+  chunkMode: boolean,
+): TreeNode => {
   const root: TreeNode = {
     id: "root",
     name: "Bundle Root",
@@ -70,7 +73,7 @@ export const buildTree = (graphData: GraphData, chunkMode: boolean): TreeNode =>
     return parentFolder;
   };
 
-  if(chunkMode){
+  if (chunkMode) {
     // Add chunk nodes
     graphData.nodes
       .filter(node => node.type === "chunk")
@@ -91,8 +94,7 @@ export const buildTree = (graphData: GraphData, chunkMode: boolean): TreeNode =>
         };
         root.children.push(chunkNode);
       });
-  }
-  else{
+  } else {
     // Add module nodes
     graphData.nodes
       .filter(node => node.type === "module")
@@ -130,7 +132,7 @@ export const buildTree = (graphData: GraphData, chunkMode: boolean): TreeNode =>
         }
       });
   }
-  
+
   const calculateFolderSizes = (node: TreeNode): void => {
     if (node.type === "folder") {
       node.statSize = 0;

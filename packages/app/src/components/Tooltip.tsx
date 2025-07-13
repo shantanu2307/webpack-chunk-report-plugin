@@ -70,7 +70,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
           >
             {content}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
