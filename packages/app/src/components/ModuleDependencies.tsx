@@ -183,6 +183,11 @@ const VirtualizedExports = ({
   const [visibleItems, setVisibleItems] = useState(exports);
   const [sliceIndex, setSliceIndex] = useState(20); // Initial number of items to show
 
+  const cls =
+    color === "green"
+      ? "bg-green-100 text-green-800"
+      : "bg-red-100 text-red-800"; 
+
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
@@ -213,7 +218,7 @@ const VirtualizedExports = ({
       {visibleItems.map((exp, idx) => (
         <span
           key={idx}
-          className={`px-2 py-1 bg-${color}-100 text-${color}-800 rounded text-xs`}
+          className={`px-2 py-1 ${cls} rounded text-xs truncate`}
         >
           {exp}
         </span>
