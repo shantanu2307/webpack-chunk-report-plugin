@@ -160,7 +160,7 @@ const VirtualizedList = ({
           itemSize={getSize}
           itemData={{ items, onNodeSelect }}
         >
-          {({ data, index, style ,}) => (
+          {({ data, index, style }) => (
             <div style={style}>
               <ListItemWrapper data={data} index={index} setSize={setSize} />
             </div>
@@ -186,7 +186,7 @@ const VirtualizedExports = ({
   const cls =
     color === "green"
       ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800"; 
+      : "bg-red-100 text-red-800";
 
   useEffect(() => {
     const handleResize = () => {
@@ -216,10 +216,7 @@ const VirtualizedExports = ({
   return (
     <div ref={containerRef} className="flex flex-wrap gap-1">
       {visibleItems.map((exp, idx) => (
-        <span
-          key={idx}
-          className={`px-2 py-1 ${cls} rounded text-xs truncate`}
-        >
+        <span key={idx} className={`px-2 py-1 ${cls} rounded text-xs truncate`}>
           {exp}
         </span>
       ))}
