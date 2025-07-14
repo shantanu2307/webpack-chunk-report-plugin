@@ -1,5 +1,6 @@
 // libs
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback, memo } from "react";
+import { FixedSizeList as List } from "react-window";
 
 // components
 import {
@@ -28,49 +29,62 @@ import { FileTreeProps, SortOption, FilterOption, TreeNode } from "./types";
 import { adaptTree } from "./utils/adaptTree";
 import { useLatestCallback } from "../../hooks/useLatestCallback";
 
-export const FileTree: React.FC<FileTreeProps> = ({
+type FlattenedTreeNode = TreeNode & { depth: number };
+
+export const FileTree: React.FC<FileTreeProps> = memo(({
   graphData,
   onNodeSelect,
   selectedNodeId,
 }) => {
-  // wrapper
+  // State management
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
-    new Set(["root"]),
+    new Set(["root"])
   );
-
-  // states
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [filterBy, setFilterBy] = useState<FilterOption>("module");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const chunKMode = filterBy === "chunk";
 
-  const tree = useMemo(
-    () => buildTree(graphData, chunKMode),
-    [graphData, chunKMode],
-  );
+  const chunkMode = filterBy === "chunk";
+  const listRef = useRef<List>(null);
 
-  const adaptedTree = useMemo(
-    () => adaptTree({ tree, searchTerm, sortBy, filterBy, sortDirection }),
-    [tree, sortBy, filterBy, sortDirection, searchTerm],
-  );
+  // Memoized tree data
+  const tree = useMemo(() => buildTree(graphData, chunkMode), [graphData, chunkMode]);
 
+  const adaptedTree = useMemo(() => {
+    const result = adaptTree({
+      tree,
+      searchTerm,
+      sortBy,
+      filterBy,
+      sortDirection,
+    });
+    return result;
+  }, [tree, searchTerm, sortBy, filterBy, sortDirection]);
+
+  // Handlers
   const toggleExpanded = useLatestCallback((nodeId: string) => {
-    const newExpanded = new Set(expandedNodes);
-    if (newExpanded.has(nodeId)) {
-      newExpanded.delete(nodeId);
-    } else {
-      newExpanded.add(nodeId);
+    setExpandedNodes(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(nodeId)) {
+        newExpanded.delete(nodeId);
+      } else {
+        newExpanded.add(nodeId);
+      }
+      return newExpanded;
+    });
+
+    // Reset list cache when items change
+    if (listRef.current && "resetAfterIndex" in listRef.current && typeof listRef.current.resetAfterIndex ==="function") {
+      listRef.current.resetAfterIndex(0);
     }
-    setExpandedNodes(newExpanded);
   });
 
   const handleSort = useLatestCallback((option: SortOption) => {
-    if (sortBy === option) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(option);
-      setSortDirection("asc");
+    const shouldToggleSortDirection = option === sortBy;
+    setSortBy(option);
+    if(shouldToggleSortDirection){
+      setSortDirection(prev => prev==="asc"?"desc":"asc");
     }
   });
 
@@ -83,7 +97,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
     if (node.isCommonJS) return Settings;
     switch (node.fileType) {
       case "javascript":
-        return Code;
       case "typescript":
         return Code;
       case "stylesheet":
@@ -95,142 +108,193 @@ export const FileTree: React.FC<FileTreeProps> = ({
     }
   });
 
-  const renderTreeNode = useLatestCallback(
-    (node: TreeNode, depth: number = 0): React.ReactNode => {
+  // Tree flattening for virtualization
+  const flattenTree = useCallback(
+    (node: TreeNode, depth = 0): FlattenedTreeNode[] => {
       const isExpanded = expandedNodes.has(node.id);
-      const isSelected = selectedNodeId === node.id;
-      const hasChildren = node.children.length > 0;
-      const Icon = getFileIcon(node);
+      const result: FlattenedTreeNode[] = [{ ...node, depth }];
 
+      if (isExpanded && node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+          result.push(...flattenTree(child, depth + 1));
+        });
+      }
+      return result;
+    },
+    [expandedNodes]
+  );
+
+  const flattenedNodes = useMemo(() => {
+    const result = adaptedTree ? flattenTree(adaptedTree) : [];
+    return result;
+  }, [adaptedTree, flattenTree]);
+
+  const renderTreeNode = useLatestCallback(
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const node = flattenedNodes[index];
+      if (!node) {
+        return <div style={style}>No node at index {index}</div>;
+      }
+
+      const isSelected = selectedNodeId === node.id;
+      const hasChildren = node.children && node.children.length > 0;
+      const Icon = getFileIcon(node);
       return (
-        <div key={node.id} className="select-none">
+        <div style={style} key={node.id} className="select-none">
           <div
             className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
               isSelected ? "bg-blue-100 border border-blue-300" : ""
             }`}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
+            style={{ paddingLeft: `${node.depth * 16 + 8}px` }}
             onClick={() => {
               if (hasChildren) {
                 toggleExpanded(node.id);
               }
-              if (node.node) {
-                onNodeSelect(node.node);
-              }
+              if (node.node) onNodeSelect(node.node);
             }}
+            aria-label={node.name}
+            role="treeitem"
+            aria-selected={isSelected}
+            aria-expanded={hasChildren ? expandedNodes.has(node.id) : undefined}
           >
-            {hasChildren && (
-              <button className="p-0.5 hover:bg-gray-200 rounded">
-                {isExpanded ? (
+            {hasChildren ? (
+              <button
+                className="p-0.5 hover:bg-gray-200 rounded"
+                aria-label={expandedNodes.has(node.id) ? "Collapse" : "Expand"}
+                onClick={e => {
+                  e.stopPropagation();
+                  toggleExpanded(node.id);
+                }}
+              >
+                {expandedNodes.has(node.id) ? (
                   <ChevronDown className="w-3 h-3 text-gray-500" />
                 ) : (
                   <ChevronRight className="w-3 h-3 text-gray-500" />
                 )}
               </button>
+            ) : (
+              <div className="w-4" />
             )}
-            {!hasChildren && <div className="w-4" />}
 
-            <Icon className={`w-4 h-4 ${getNodeColor(node)}`} />
+            <Icon key={node.id} className={`w-4 h-4 ${getNodeColor(node)}`} />
 
             <span className="flex-1 text-sm font-medium text-gray-900 truncate">
               {node.name}
             </span>
 
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              {node.importedBy.length > 0 && (
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">
-                  {node.importedBy.length} deps
-                </span>
-              )}
-              <span className="font-mono">{formatBytes(node.statSize)}</span>
-            </div>
+            {node.importedBy && node.importedBy.length > 0 && (
+              <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
+                {node.importedBy.length} deps
+              </span>
+            )}
+            <span className="text-xs text-gray-500 font-mono">
+              {formatBytes(node.statSize)}
+            </span>
           </div>
-
-          {isExpanded && hasChildren && (
-            <div>
-              {node.children.map(child => renderTreeNode(child, depth + 1))}
-            </div>
-          )}
         </div>
       );
-    },
+    }
   );
 
-  if (!adaptedTree) return null;
+  const onSearch = useLatestCallback((e)=>{
+    setSearchTerm(e.target.value);
+  });
+
+  const onSort = useLatestCallback((e)=>{
+       handleSort(e.target.value as SortOption);
+  });
+
+  const onFilter = useLatestCallback((e)=>{
+      setFilterBy(e.target.value as FilterOption);
+  })
+
+  // Early return with debug info
+  if (!graphData) {
+    return <div className="p-4 text-red-500">No graph data provided</div>;
+  }
+
+  if (!tree) {
+    return <div className="p-4 text-red-500">Failed to build tree</div>;
+  }
+
+  if (!adaptedTree) {
+    return <div className="p-4 text-red-500">Failed to adapt tree</div>;
+  }
+
+  if (flattenedNodes.length === 0) {
+    return <div className="p-4 text-yellow-500">No nodes to display</div>;
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">File Tree</h3>
+    <div
+      className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col"
+    >
+      <div className="flex-shrink-0">
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            File Tree ({flattenedNodes.length} items)
+          </h3>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search files and folders..."
+                value={searchTerm}
+                onChange={onSearch}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                aria-label="Search files and folders"
+              />
+            </div>
 
-        {/* Search */}
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search files and folders..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-          />
-        </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <select
+                  value={sortBy}
+                  onChange={onSort}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
+                  aria-label="Sort by"
+                >
+                  <option value="name">Name</option>
+                  <option value="statSize">Stat Size</option>
+                  <option value="parsedSize">Parsed Size</option>
+                  <option value="gzipSize">Gzip Size</option>
+                </select>
+                <ArrowUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+              </div>
 
-        {/* Controls */}
-        <div className="flex gap-2">
-          {/* Sort */}
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={e => handleSort(e.target.value as SortOption)}
-              className="appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
-            >
-              <option value="name">Name</option>
-              <option value="statSize">Stat Size</option>
-              <option value="parsedSize">Parsed Size</option>
-              <option value="gzipSize">Gzip Size</option>
-            </select>
-            <ArrowUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Filter */}
-          <div className="relative">
-            <select
-              value={filterBy}
-              onChange={e => setFilterBy(e.target.value as FilterOption)}
-              className="appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
-            >
-              <option value="module">Modules Only</option>
-              <option value="chunk">Chunks Only</option>
-              <option value="commonjs">CommonJS</option>
-              <option value="large">Large Files (&gt;1KB Gzipped)</option>
-            </select>
-            <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+              <div className="relative flex-1">
+                <select
+                  value={filterBy}
+                  onChange={onFilter}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
+                  aria-label="Filter by"
+                >
+                  <option value="module">Modules Only</option>
+                  <option value="chunk">Chunks Only</option>
+                  <option value="commonjs">CommonJS</option>
+                  <option value="large">Large Files (&gt;1KB Gzipped)</option>
+                </select>
+                <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Tree */}
-      <div style={{ height: "450px", overflow: "auto" }}>
-        <div className="flex-1 p-2">{renderTreeNode(adaptedTree)}</div>
-      </div>
-
-      {/* Stats */}
-      <div className="p-3 border-t border-gray-200 bg-gray-50">
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div>
-            <span className="font-medium text-gray-700">Total Size:</span>
-            <span className="ml-1 text-gray-600">
-              {formatBytes(adaptedTree.statSize || 0)}
-            </span>
-          </div>
-          <div>
-            <span className="font-medium text-gray-700">Gzip Size:</span>
-            <span className="ml-1 text-gray-600">
-              {formatBytes(adaptedTree.gzipSize || 0)}
-            </span>
-          </div>
-        </div>
+      <div className="mt-2 flex-1 min-h-0">
+        {/*@ts-expect-error --- Can use here */}
+        <List
+          ref={listRef}
+          height={window.innerHeight} // Approximate height minus header
+          itemCount={flattenedNodes.length}
+          itemSize={32}
+          width="100%"
+          className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+          aria-label="File tree"
+        >
+          {renderTreeNode}
+        </List>
       </div>
     </div>
   );
-};
+});
