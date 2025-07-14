@@ -22,6 +22,43 @@ export type GraphData = {
 
 export type ChunkIdVsChunkMap = Record<string, Chunk>;
 
+const getImportersOfConcatenatedModule = (
+  module: Module,
+  allModules: Record<string, Module>,
+  seen: Set<string> = new Set<string>(),
+): string[] => {
+  // Base case: already processed this module
+  if (seen.has(module.fileName)) {
+    return [];
+  }
+  seen.add(module.fileName);
+
+  const importers: string[] = [];
+
+  for (const reason of module.reasons) {
+    const parentModuleId = reason.from;
+    if (!parentModuleId) continue;
+
+    const parentModule = allModules[parentModuleId];
+    if (!parentModule) continue;
+
+    if (parentModule.type === "Concatenated") {
+      // Recursively get importers of concatenated parent
+      const parentImporters = getImportersOfConcatenatedModule(
+        parentModule,
+        allModules,
+        seen,
+      );
+      importers.push(...parentImporters);
+    } else {
+      // Regular module - add directly
+      importers.push(parentModuleId);
+    }
+  }
+
+  return importers;
+};
+
 export function generateGraphFromChunkIdVsChunkMap(
   chunkIdVsChunkMap: ChunkIdVsChunkMap,
 ): GraphData {
@@ -105,19 +142,20 @@ export function generateGraphFromChunkIdVsChunkMap(
   });
 
   // Then process all reasons to create dependencies
-  Object.values(moduleMap).forEach(chunkModules => {
-    Object.values(chunkModules).forEach(moduleNode => {
-      const module = moduleNode.data as Module;
+  Object.entries(moduleMap).forEach(([chunkId, moduleIdVsGraphNode]) => {
+    Object.entries(moduleIdVsGraphNode).forEach(([moduleId, graphNode]) => {
+      const module = graphNode.data as Module;
       const seen = new Set<string>();
-
-      const processReasons = (m: Module) => {
-        m.reasons.forEach(reason => {
-          if (
+      const processReasons = (mod: Module) => {
+        mod.reasons.forEach(reason => {
+          const shouldAvoidAdding =
             !reason.from ||
-            reason.from === m.fileName ||
-            seen.has(reason.from)
-          )
+            reason.from === mod.fileName ||
+            seen.has(reason.from);
+
+          if (shouldAvoidAdding) {
             return;
+          }
 
           seen.add(reason.from);
 
@@ -125,50 +163,61 @@ export function generateGraphFromChunkIdVsChunkMap(
           const sourceModule = allModules[reason.from];
           if (!sourceModule) return;
 
-          // For concatenated modules, we want to link to their submodules
-          if (sourceModule.type === "Concatenated" && sourceModule.subModules) {
-            sourceModule.subModules.forEach(subModule => {
-              if (subModule.fileName) {
-                links.push({
-                  source: subModule.fileName,
-                  target: module.fileName,
-                  reason,
-                });
-                // Find the submodule's node to add dependency
-                Object.values(moduleMap).some(chunkMods => {
-                  if (chunkMods[subModule.fileName]) {
-                    chunkMods[subModule.fileName].dependencies.push(
-                      module.fileName,
-                    );
-                    return true;
-                  }
-                  return false;
-                });
+          switch (module.type) {
+            case "Concatenated": {
+              mod.subModules.forEach(processReasons);
+              break;
+            }
+            default: {
+              switch (sourceModule.type) {
+                case "Concatenated": {
+                  const importers = getImportersOfConcatenatedModule(
+                    sourceModule,
+                    allModules,
+                  );
+                  importers.forEach(importer => {
+                    links.push({
+                      source: importer,
+                      target: module.fileName,
+                      reason: {
+                        from: importer,
+                        explanation: `Via concatenated source module: ${sourceModule.fileName}`,
+                        type: reason.type,
+                      },
+                    });
+                    // Add dependency from each submodule
+                    Object.values(moduleMap).forEach(modIdVsModMap => {
+                      importers.forEach(importer => {
+                        if (modIdVsModMap[importer]) {
+                          modIdVsModMap[importer].dependencies.push(
+                            module.fileName,
+                          );
+                        }
+                      });
+                    });
+                  });
+                }
+                default: {
+                  // External Module or Normal Module
+                  links.push({
+                    source: reason.from,
+                    target: module.fileName,
+                    reason,
+                  });
+                  // Find the source module's node to add dependency
+                  Object.values(moduleMap).forEach(modIdVsModMap => {
+                    if (modIdVsModMap[reason.from]) {
+                      modIdVsModMap[reason.from].dependencies.push(
+                        module.fileName,
+                      );
+                    }
+                  });
+                }
               }
-            });
-          } else {
-            links.push({
-              source: reason.from,
-              target: module.fileName,
-              reason,
-            });
-            // Find the source module's node to add dependency
-            Object.values(moduleMap).some(chunkMods => {
-              if (chunkMods[reason.from!]) {
-                chunkMods[reason.from!].dependencies.push(module.fileName);
-                return true;
-              }
-              return false;
-            });
+            }
           }
         });
-
-        // Also process reasons for submodules if this is a concatenated module
-        if (m.type === "Concatenated" && m.subModules) {
-          m.subModules.forEach(subModule => processReasons(subModule));
-        }
       };
-
       processReasons(module);
     });
   });

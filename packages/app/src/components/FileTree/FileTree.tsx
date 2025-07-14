@@ -129,7 +129,7 @@ export const FileTree: React.FC<FileTreeProps> = memo(({
     return result;
   }, [adaptedTree, flattenTree]);
 
-  const renderTreeNode = useLatestCallback(
+  const renderTreeNode = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const node = flattenedNodes[index];
       if (!node) {
@@ -193,7 +193,8 @@ export const FileTree: React.FC<FileTreeProps> = memo(({
           </div>
         </div>
       );
-    }
+    },
+    [expandedNodes, flattenedNodes, getFileIcon, onNodeSelect, selectedNodeId, toggleExpanded]
   );
 
   const onSearch = useLatestCallback((e)=>{
