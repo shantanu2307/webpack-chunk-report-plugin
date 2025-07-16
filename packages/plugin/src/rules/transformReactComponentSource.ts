@@ -1,6 +1,8 @@
 import ts from "typescript";
 import path from "path";
 
+import { METADATA_KEY } from "./constants";
+
 export function transformReactComponentSource(): ts.TransformerFactory<ts.SourceFile> {
   return (context: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
     const visitor: ts.Visitor = (node: ts.Node): ts.Node => {
@@ -16,7 +18,7 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
           attr =>
             ts.isJsxAttribute(attr) &&
             "text" in attr.name &&
-            attr.name.text === "__TEST__SOURCE__"
+            attr.name.text === METADATA_KEY
         );
         if (alreadyHasSource) return node;
 
@@ -28,7 +30,7 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
         const fileName = path.relative(process.cwd(), sourceFile.fileName);
 
         const sourceProp = ts.factory.createJsxAttribute(
-          ts.factory.createIdentifier("__FIBER_COMPONENT_SOURCE__"),
+          ts.factory.createIdentifier(METADATA_KEY),
           ts.factory.createJsxExpression(
             undefined,
             ts.factory.createObjectLiteralExpression([

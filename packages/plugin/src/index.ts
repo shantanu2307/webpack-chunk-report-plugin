@@ -85,3 +85,5 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
 
 export type { Module, Chunk, Reason } from "./types";
 export type { WebpackConfigHOC, Options } from "./types";
+
+export { METADATA_KEY } from "./rules/constants";
