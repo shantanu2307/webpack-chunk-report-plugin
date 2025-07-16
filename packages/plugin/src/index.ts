@@ -4,6 +4,9 @@ import { merge } from "webpack-merge";
 import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 import { ChunkReportPlugin } from "./ChunkReportPlugin";
 
+// rules
+import { transformReactComponentSource } from "./rules/transformReactComponentSource";
+
 // types
 import type { Configuration } from "webpack";
 import type { WebpackConfigHOC, Options } from "./types";
@@ -43,6 +46,23 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
       options.openAnalyzer !== undefined ? options.openAnalyzer : false;
 
     const newConfig: Configuration = {
+      module: {
+        rules: [
+          {
+            test: /\.[jt]sx?$/, // Matches .js, .jsx, .ts, .tsx
+            exclude: /node_modules/,
+            use: {
+              loader: "ts-loader",
+              options: {
+                getCustomTransformers: () => ({
+                  before: [transformReactComponentSource()],
+                }),
+                transpileOnly: true,
+              },
+            },
+          },
+        ],
+      },
       plugins: [
         new BundleAnalyzerPlugin({
           ...restOptions,
