@@ -27,7 +27,7 @@ export type Source = {
 // Utility function to walk the fiber tree
 function walkFiber(
   fiber: Fiber,
-  seen: Set<string> = new Set<string>()
+  seen: Set<string> = new Set<string>(),
 ): Set<string> {
   if (!fiber) return seen;
   const source: Source | undefined = fiber.pendingProps?.[METADATA_KEY];
@@ -68,12 +68,12 @@ function getMountedComponentSources(): Set<string> {
 
 // Hook version with timeout control
 export function useMountedSources(options?: { timeout?: number }): void {
-  const timeout = options?.timeout ?? 10_000 // 10 seconds
+  const timeout = options?.timeout ?? 10_000; // 10 seconds
   useEffect(() => {
-    const timer = setTimeout(()=>{
+    const timer = setTimeout(() => {
       const sources = getMountedComponentSources();
       console.log(Array.from(sources));
-    }, timeout)
+    }, timeout);
     return () => {
       clearTimeout(timer);
     };
@@ -82,10 +82,10 @@ export function useMountedSources(options?: { timeout?: number }): void {
 
 export function withMountedSources<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  options?: { timeout?: number }
+  options?: { timeout?: number },
 ): React.ComponentType<P> {
   return function WithMountedSources(props: P) {
-   useMountedSources(options);
-    return <WrappedComponent {...props}  />;
+    useMountedSources(options);
+    return <WrappedComponent {...props} />;
   };
 }

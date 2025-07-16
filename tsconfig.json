@@ -12,8 +12,8 @@
     "jsx": "react-jsx",
     "paths": {
       "@app/*": ["./packages/app/src/*"],
-      "@plugin/*": ["./packages/plugin/src/*"], 
-      "@runtime/*":["./packages/runtime/*"]
+      "@plugin/*": ["./packages/plugin/src/*"],
+      "@runtime/*": ["./packages/runtime/*"]
     }
   },
   "exclude": ["node_modules", "dist"]
