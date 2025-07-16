@@ -1,0 +1,1 @@
+export const METADATA_KEY = "__REACT_COMPONENT_SOURCE__";
