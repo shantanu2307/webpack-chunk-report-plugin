@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "commonjs",
+    "module": "nodenext",
     "declaration": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
       "@app/*": ["./packages/app/src/*"],
-      "@plugin/*": ["./packages/plugin/src/*"]
+      "@plugin/*": ["./packages/plugin/src/*"], 
+      "@runtime/*":["./packages/runtime/*"]
     }
   },
   "exclude": ["node_modules", "dist"]
