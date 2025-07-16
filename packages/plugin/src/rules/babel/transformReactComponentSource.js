@@ -1,4 +1,4 @@
-const pathUtil = require('path');
+const pathUtil = require("path");
 
 const METADATA_KEY = "__REACT_COMPONENT_SOURCE__";
 
@@ -13,65 +13,68 @@ module.exports = function transformReactComponentSource() {
         if (!tagName || /^[a-z]/.test(tagName)) return;
 
         const alreadyHasSource = node.attributes.some(
-          attr => attr.name && attr.name.name === METADATA_KEY
+          attr => attr.name && attr.name.name === METADATA_KEY,
         );
         if (alreadyHasSource) return;
 
         const { line, column } = node.loc.start;
-        const fileName = pathUtil.relative(process.cwd(), this.file.opts.filename);
+        const fileName = pathUtil.relative(
+          process.cwd(),
+          this.file.opts.filename,
+        );
 
         const sourceProp = {
-          type: 'JSXAttribute',
+          type: "JSXAttribute",
           name: {
-            type: 'JSXIdentifier',
+            type: "JSXIdentifier",
             name: METADATA_KEY,
           },
           value: {
-            type: 'JSXExpressionContainer',
+            type: "JSXExpressionContainer",
             expression: {
-              type: 'ObjectExpression',
+              type: "ObjectExpression",
               properties: [
                 {
-                  type: 'ObjectProperty',
+                  type: "ObjectProperty",
                   key: {
-                    type: 'Identifier',
-                    name: 'fileName',
+                    type: "Identifier",
+                    name: "fileName",
                   },
                   value: {
-                    type: 'StringLiteral',
+                    type: "StringLiteral",
                     value: fileName,
                   },
                 },
                 {
-                  type: 'ObjectProperty',
+                  type: "ObjectProperty",
                   key: {
-                    type: 'Identifier',
-                    name: 'lineNumber',
+                    type: "Identifier",
+                    name: "lineNumber",
                   },
                   value: {
-                    type: 'NumericLiteral',
+                    type: "NumericLiteral",
                     value: line,
                   },
                 },
                 {
-                  type: 'ObjectProperty',
+                  type: "ObjectProperty",
                   key: {
-                    type: 'Identifier',
-                    name: 'columnNumber',
+                    type: "Identifier",
+                    name: "columnNumber",
                   },
                   value: {
-                    type: 'NumericLiteral',
+                    type: "NumericLiteral",
                     value: column + 1,
                   },
                 },
                 {
-                  type: 'ObjectProperty',
+                  type: "ObjectProperty",
                   key: {
-                    type: 'Identifier',
-                    name: 'componentName',
+                    type: "Identifier",
+                    name: "componentName",
                   },
                   value: {
-                    type: 'StringLiteral',
+                    type: "StringLiteral",
                     value: tagName,
                   },
                 },

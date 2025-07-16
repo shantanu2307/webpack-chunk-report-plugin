@@ -1,5 +1,5 @@
 // libs
-import path from 'path'
+import path from "path";
 import { merge } from "webpack-merge";
 
 // plugins
@@ -33,7 +33,7 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
       outputDirectory,
       emitChunkIdVsModuleData,
       disableTreeShaking,
-      useBabel = true, 
+      useBabel = true,
       ...restOptions
     } = options;
 
@@ -68,7 +68,7 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
                       [
                         path.resolve(
                           __dirname,
-                          "rules/babel/transformReactComponentSource.js"
+                          "rules/babel/transformReactComponentSource.js",
                         ),
                       ],
                     ],
