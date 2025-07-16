@@ -6,9 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspace report-visualiser build && yarn workspace webpack-chunk-report-plugin build",
+    "build": "yarn workspace report-visualiser build && yarn workspace webpack-chunk-report-plugin build && yarn workspace webpack-runtime-analyzer-hoc build",
     "postbuild": "sh build.sh",
     "publish:plugin": "yarn workspace webpack-chunk-report-plugin publish --access public",
+    "publish": "yarn workspace webpack-runtime-analyzer-hoc publish --access public",
     "tsc": "tsc --build --noEmit"
   }
 }
