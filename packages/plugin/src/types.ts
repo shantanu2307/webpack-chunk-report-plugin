@@ -17,6 +17,7 @@ export type Options = Omit<BundleAnalyzerOptions, "analyzerMode"> & {
   enabled?: boolean;
   emitChunkIdVsModuleData?: boolean;
   disableTreeShaking?: DisableTreeShaking;
+  useBabel?: boolean;
 };
 
 export type RequireKeys<T, K extends keyof T> = T & {

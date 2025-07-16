@@ -1,3 +1,5 @@
+// libs
+import path from 'path'
 import { merge } from "webpack-merge";
 
 // plugins
@@ -31,6 +33,7 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
       outputDirectory,
       emitChunkIdVsModuleData,
       disableTreeShaking,
+      useBabel = true, 
       ...restOptions
     } = options;
 
@@ -48,19 +51,43 @@ export function withChunkReportPlugin(options: Options = {}): WebpackConfigHOC {
     const newConfig: Configuration = {
       module: {
         rules: [
-          {
-            test: /\.[jt]sx?$/, // Matches .js, .jsx, .ts, .tsx
-            exclude: /node_modules/,
-            use: {
-              loader: "ts-loader",
-              options: {
-                getCustomTransformers: () => ({
-                  before: [transformReactComponentSource()],
-                }),
-                transpileOnly: true,
+          useBabel
+            ? {
+                test: /\.(js|jsx|ts|tsx)$/,
+                exclude: /node_modules/,
+                use: {
+                  loader: "babel-loader",
+                  options: {
+                    presets: [
+                      "@babel/preset-env",
+                      "@babel/preset-react",
+                      "@babel/preset-typescript", // if using TypeScript
+                    ],
+                    plugins: [
+                      // Add your plugin here (assuming it's in src/babel/transform-react-component-source.js)
+                      [
+                        path.resolve(
+                          __dirname,
+                          "rules/babel/transformReactComponentSource.js"
+                        ),
+                      ],
+                    ],
+                  },
+                },
+              }
+            : {
+                test: /\.[jt]sx?$/, // Matches .js, .jsx, .ts, .tsx
+                exclude: /node_modules/,
+                use: {
+                  loader: "ts-loader",
+                  options: {
+                    getCustomTransformers: () => ({
+                      before: [transformReactComponentSource()],
+                    }),
+                    transpileOnly: true,
+                  },
+                },
               },
-            },
-          },
         ],
       },
       plugins: [
