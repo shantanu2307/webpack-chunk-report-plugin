@@ -29,16 +29,12 @@
   "license": "ISC",
   "description": "Webpack Chunk Report Plugin",
   "devDependencies": {
-    "@babel/preset-env": "^7.28.0",
-    "@babel/preset-react": "^7.27.1",
-    "@babel/preset-typescript": "^7.27.1",
     "@types/jsdom": "^21.1.7",
     "@types/lodash": "^4.17.20",
     "@types/node": "^24.0.10",
     "@types/webpack": "^5.28.5",
     "@types/webpack-bundle-analyzer": "^4.7.0",
-    "@types/webpack-merge": "^5.0.0",
-    "babel-loader": "^10.0.0"
+    "@types/webpack-merge": "^5.0.0"
   },
   "dependencies": {
     "cjs-module-lexer": "^2.1.0",
@@ -51,6 +47,11 @@
     "webpack-merge": "^6.0.1"
   },
   "peerDependencies": {
-    "webpack": "^5.0.0"
+    "babel-loader": "^10.0.0",
+    "webpack": "^5.0.0",
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "@babel/preset-react": "^7.9.4",
+    "@babel/preset-typescript": "^7.9.0"
   }
 }
