@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Fiber, FiberRoot } from "react-reconciler";
-import { METADATA_KEY } from "@plugin/rules/constants";
+
+const METADATA_KEY = "__REACT_COMPONENT_SOURCE__";
 
 declare global {
   interface Window {
