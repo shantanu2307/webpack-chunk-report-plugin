@@ -1,6 +1,6 @@
 {
   "name": "webpack-runtime-module-analyzer-hoc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -24,10 +24,10 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "webpack": "^5.0.0",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
-    "react-reconciler": ">=0.24.0"
+    "react-reconciler": ">=0.24.0",
+    "webpack": "^5.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",
