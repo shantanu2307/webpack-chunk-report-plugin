@@ -18,14 +18,14 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
           attr =>
             ts.isJsxAttribute(attr) &&
             "text" in attr.name &&
-            attr.name.text === METADATA_KEY
+            attr.name.text === METADATA_KEY,
         );
         if (alreadyHasSource) return node;
 
         const sourceFile = node.getSourceFile();
         const { line, character } = ts.getLineAndCharacterOfPosition(
           sourceFile,
-          node.getStart()
+          node.getStart(),
         );
         const fileName = path.relative(process.cwd(), sourceFile.fileName);
 
@@ -36,22 +36,22 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
             ts.factory.createObjectLiteralExpression([
               ts.factory.createPropertyAssignment(
                 ts.factory.createIdentifier("fileName"),
-                ts.factory.createStringLiteral(fileName)
+                ts.factory.createStringLiteral(fileName),
               ),
               ts.factory.createPropertyAssignment(
                 ts.factory.createIdentifier("lineNumber"),
-                ts.factory.createNumericLiteral((line + 1).toString())
+                ts.factory.createNumericLiteral((line + 1).toString()),
               ),
               ts.factory.createPropertyAssignment(
                 ts.factory.createIdentifier("columnNumber"),
-                ts.factory.createNumericLiteral((character + 1).toString())
+                ts.factory.createNumericLiteral((character + 1).toString()),
               ),
               ts.factory.createPropertyAssignment(
                 ts.factory.createIdentifier("componentName"),
-                ts.factory.createStringLiteral(tagName)
+                ts.factory.createStringLiteral(tagName),
               ),
-            ])
-          )
+            ]),
+          ),
         );
 
         const newAttributes = ts.factory.createJsxAttributes([
@@ -64,7 +64,7 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
             node,
             node.tagName,
             node.typeArguments,
-            newAttributes
+            newAttributes,
           );
         }
 
@@ -72,7 +72,7 @@ export function transformReactComponentSource(): ts.TransformerFactory<ts.Source
           node,
           node.tagName,
           node.typeArguments,
-          newAttributes
+          newAttributes,
         );
       }
 
