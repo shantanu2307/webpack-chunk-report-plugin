@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { FileTree } from "./components/FileTree/FileTree";
+import { MultiSelect } from "./components/MultiSelect";
 import { ModuleDependencies } from "./components/ModuleDependencies";
 import {
   GraphData,
@@ -14,7 +15,20 @@ function App() {
     // @ts-expect-error --- Can use here
     generateGraphFromChunkIdVsChunkMap(window.CHUNK_DATA ?? {}),
   );
+
+  const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+
+  const items = useMemo(
+    () =>
+      graphData.nodes
+        .filter(m => m.type === "module")
+        .map(el => ({
+          id: el.id,
+          label: el.id,
+        })),
+    [graphData],
+  );
 
   const handleNodeSelect = useCallback((node: GraphNode) => {
     setSelectedNode(node);
@@ -88,23 +102,39 @@ function App() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* File Tree */}
-          <div className="lg:col-span-2">
-            <FileTree
-              graphData={graphData}
-              onNodeSelect={handleNodeSelect}
-              selectedNodeId={selectedNode?.id}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left-hand Pane (New) */}
+          <div className="w-full lg:w-1/5 bg-white p-4 rounded-lg">
+            {/* Add your left pane content here */}
+            <h2 className="font-bold mb-4">Add Mounted Modules</h2>
+            <MultiSelect
+              items={items}
+              selectedItems={selectedItems}
+              onSelect={setSelectedItems}
+              minHeight={300}
+              maxHeight={600}
             />
           </div>
 
-          {/* Dependencies Panel */}
-          <div>
-            <ModuleDependencies
-              selectedNode={selectedNode}
-              graphData={graphData}
-              onNodeSelect={handleNodeSelect}
-            />
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col lg:flex-row gap-6">
+            {/* File Tree */}
+            <div className="lg:flex-[2]">
+              <FileTree
+                graphData={graphData}
+                onNodeSelect={handleNodeSelect}
+                selectedNodeId={selectedNode?.id}
+              />
+            </div>
+
+            {/* Dependencies Panel */}
+            <div className="lg:flex-1">
+              <ModuleDependencies
+                selectedNode={selectedNode}
+                graphData={graphData}
+                onNodeSelect={handleNodeSelect}
+              />
+            </div>
           </div>
         </div>
       </div>
