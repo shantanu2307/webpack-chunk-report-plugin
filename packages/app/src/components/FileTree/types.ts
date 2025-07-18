@@ -22,6 +22,7 @@ export interface TreeNode {
   importedBy: string[];
   isCommonJS?: boolean;
   fileType?: string;
+  isRequiredOnInitialLoad?: boolean
 }
 
 export type SortOption = "name" | "statSize" | "gzipSize" | "parsedSize";

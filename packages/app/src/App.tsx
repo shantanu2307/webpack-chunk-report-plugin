@@ -7,6 +7,7 @@ import {
   GraphNode,
   generateGraphFromChunkIdVsChunkMap,
 } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
+import { addLazyLoadingInfo } from "./utils/graphUtils";
 
 import { FileText } from "lucide-react";
 
@@ -16,8 +17,13 @@ function App() {
     generateGraphFromChunkIdVsChunkMap(window.CHUNK_DATA ?? {}),
   );
 
-  const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+
+  const adaptedGraphData = useMemo(
+    () => addLazyLoadingInfo(graphData, selectedItems),
+    [selectedItems, graphData],
+  );
 
   const items = useMemo(
     () =>
@@ -66,7 +72,7 @@ function App() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Nodes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {graphData.nodes.length}
+                  {adaptedGraphData.nodes.length}
                 </p>
               </div>
             </div>
@@ -80,7 +86,7 @@ function App() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Chunks</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {graphData.nodes.filter(n => n.type === "chunk").length}
+                  {adaptedGraphData.nodes.filter(n => n.type === "chunk").length}
                 </p>
               </div>
             </div>
@@ -94,7 +100,7 @@ function App() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Modules</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {graphData.nodes.filter(n => n.type === "module").length}
+                  {adaptedGraphData.nodes.filter(n => n.type === "module").length}
                 </p>
               </div>
             </div>
@@ -121,7 +127,7 @@ function App() {
             {/* File Tree */}
             <div className="lg:flex-[2]">
               <FileTree
-                graphData={graphData}
+                graphData={adaptedGraphData}
                 onNodeSelect={handleNodeSelect}
                 selectedNodeId={selectedNode?.id}
               />
@@ -130,7 +136,7 @@ function App() {
             <div className="lg:flex-1">
               <ModuleDependencies
                 selectedNode={selectedNode}
-                graphData={graphData}
+                graphData={adaptedGraphData}
                 onNodeSelect={handleNodeSelect}
               />
             </div>

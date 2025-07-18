@@ -7,6 +7,7 @@ export type GraphNode = {
   type: "module" | "chunk";
   data: Module | Chunk;
   dependencies: string[];
+  isRequiredOnInitialLoad?:boolean; 
 };
 
 export type GraphLink = {

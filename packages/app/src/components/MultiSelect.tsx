@@ -4,15 +4,15 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { Tooltip } from "./Tooltip";
 
 interface MultiSelectItem {
-  id: string | number;
+  id: string;
   label: string;
   description?: string; // Optional field that might affect item height
 }
 
 interface VirtualizedMultiSelectProps {
   items: MultiSelectItem[];
-  selectedItems: (string | number)[];
-  onSelect: (selectedIds: (string | number)[]) => void;
+  selectedItems: string[];
+  onSelect: (selectedIds: string[]) => void;
   minHeight?: number;
   maxHeight?: number;
 }
@@ -48,7 +48,7 @@ const VirtualizedMultiSelect: FC<VirtualizedMultiSelectProps> = ({
 
   // Toggle item selection
   const toggleItem = useCallback(
-    (itemId: string | number) => {
+    (itemId: string) => {
       const newSelectedItems = selectedItems.includes(itemId)
         ? selectedItems.filter(id => id !== itemId)
         : [...selectedItems, itemId];
