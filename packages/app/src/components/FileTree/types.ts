@@ -27,4 +27,4 @@ export interface TreeNode {
 
 export type SortOption = "name" | "statSize" | "gzipSize" | "parsedSize";
 
-export type FilterOption = "chunk" | "module" | "commonjs" | "large";
+export type FilterOption = "chunk" | "module" | "commonjs" | "large" | "required" | "not-required";
