@@ -101,21 +101,21 @@ function App() {
           </div>
         </div>
 
+        {/* Mounted Modules */}
+        <div className="mb-8 w-full bg-white p-4 rounded-lg">
+          {/* Add your left pane content here */}
+          <h2 className="font-bold mb-4">Add Mounted Modules</h2>
+          <MultiSelect
+            items={items}
+            selectedItems={selectedItems}
+            onSelect={setSelectedItems}
+            minHeight={300}
+            maxHeight={600}
+          />
+        </div>
+
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left-hand Pane (New) */}
-          <div className="w-full lg:w-1/5 bg-white p-4 rounded-lg">
-            {/* Add your left pane content here */}
-            <h2 className="font-bold mb-4">Add Mounted Modules</h2>
-            <MultiSelect
-              items={items}
-              selectedItems={selectedItems}
-              onSelect={setSelectedItems}
-              minHeight={300}
-              maxHeight={600}
-            />
-          </div>
-
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col lg:flex-row gap-6">
             {/* File Tree */}
@@ -126,7 +126,6 @@ function App() {
                 selectedNodeId={selectedNode?.id}
               />
             </div>
-
             {/* Dependencies Panel */}
             <div className="lg:flex-1">
               <ModuleDependencies
