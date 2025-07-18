@@ -224,7 +224,7 @@ export function generateGraphFromChunkIdVsChunkMap(
   });
 
   // Deduplicate dependencies
-  const graphNodes = nodes.map(node => ({
+  const graphNodes = _uniqBy(nodes, node=>node.id).map(node => ({
     ...node,
     dependencies: _uniq(node.dependencies),
   }));
