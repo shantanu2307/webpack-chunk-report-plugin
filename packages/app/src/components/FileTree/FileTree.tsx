@@ -136,6 +136,7 @@ export const FileTree: React.FC<FileTreeProps> = memo(
           return <div style={style}>No node at index {index}</div>;
         }
 
+        const bgClass = node.isRequiredOnInitialLoad ? "bg-green-100": "";
         const isSelected = selectedNodeId === node.id;
         const hasChildren = node.children && node.children.length > 0;
         const Icon = getFileIcon(node);
@@ -144,7 +145,7 @@ export const FileTree: React.FC<FileTreeProps> = memo(
             <div
               className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
                 isSelected ? "bg-blue-100 border border-blue-300" : ""
-              }`}
+              } ${bgClass}`}
               style={{ paddingLeft: `${node.depth * 16 + 8}px` }}
               onClick={() => {
                 if (hasChildren) {

@@ -1,4 +1,7 @@
-import type { GraphNode } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
+import type {
+  GraphData,
+  GraphNode,
+} from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 import type { Module } from "@plugin/types";
 
 export function formatBytes(bytes: number): string {
@@ -63,3 +66,49 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + "...";
 }
+
+export const addLazyLoadingInfo = (
+  graphData: GraphData,
+  selectedItems: string[]
+): GraphData => {
+  if (selectedItems.length === 0) {
+    return graphData;
+  }
+
+  const chunks = graphData.nodes.filter(n => n.type === "chunk");
+  const modules = graphData.nodes.filter(n => n.type === "module");
+
+  // Create a map for faster access
+  const moduleMap: Record<string, GraphNode> = modules.reduce((acc, node) => {
+    acc[node.id] = node;
+    return acc;
+  }, {} as Record<string, GraphNode>);
+
+  const updatedModuleMap: Record<string, GraphNode> = {};
+  const seen = new Set<string>();
+
+  const dfs = (id: string) => {
+    if (seen.has(id) || !(id in moduleMap)) {
+      return;
+    }
+    seen.add(id);
+    const node = moduleMap[id];
+    updatedModuleMap[id] = {
+      ...node,
+      isRequiredOnInitialLoad: true,
+    };
+    node.dependencies.forEach(dfs);
+  };
+
+  selectedItems.forEach(dfs);
+
+  // Merge original and updated module nodes
+  const finalModuleNodes = modules.map(
+    node => updatedModuleMap[node.id] ?? node
+  );
+
+  return {
+    ...graphData,
+    nodes: [...chunks, ...finalModuleNodes],
+  };
+};
