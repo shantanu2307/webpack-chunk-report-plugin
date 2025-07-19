@@ -5,6 +5,7 @@ const METADATA_KEY = "__REACT_COMPONENT_SOURCE__";
 
 declare global {
   interface Window {
+    getMountedComponents?: () => void;
     __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
       getFiberRoots?: (id: number) => Set<FiberRoot>;
       renderers?: Map<
@@ -27,65 +28,60 @@ export type Source = {
 // Utility function to walk the fiber tree
 function walkFiber(
   fiber: Fiber,
-  seen: Set<string> = new Set<string>(),
-): Set<string> {
-  if (!fiber) return seen;
+  sources: Record<string, Set<string>>
+): void {
+  if (!fiber) return;
+
   const source: Source | undefined = fiber.pendingProps?.[METADATA_KEY];
 
   if (source) {
-    seen.add(source.fileName);
+    sources[source.fileName] ??= new Set<string>();
+    sources[source.fileName].add(source.componentName);
   }
 
   if (fiber.child) {
-    walkFiber(fiber.child, seen);
+    walkFiber(fiber.child, sources);
   }
   if (fiber.sibling) {
-    walkFiber(fiber.sibling, seen);
+    walkFiber(fiber.sibling, sources);
   }
-
-  return seen;
 }
 
 // Core function to get mounted component sources
-function getMountedComponentSources(): Set<string> {
+function getMountedComponents():Record<string, Set<string>> {
   const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-  if (!hook) return new Set<string>();
+  if (!hook) return {};
 
   const renderers = hook.renderers ?? new Map<number, any>();
-  const sources = new Set<string>();
+  const sources: Record<string, Set<string>> = {};
 
   for (const [rendererId] of renderers) {
     const fiberRoots = hook.getFiberRoots?.(rendererId);
     if (!fiberRoots) continue;
 
     fiberRoots.forEach(root => {
-      const mountedSources = walkFiber(root.current);
-      mountedSources.forEach(src => sources.add(src));
+      walkFiber(root.current, sources);
     });
   }
   return sources;
 }
 
 // Hook version with timeout control
-export function useMountedSources(options?: { timeout?: number }): void {
-  const timeout = options?.timeout ?? 10_000; // 10 seconds
+export function useMountedSources(): void {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const sources = getMountedComponentSources();
-      console.log(Array.from(sources));
-    }, timeout);
+    window.getMountedComponents = getMountedComponents;
     return () => {
-      clearTimeout(timer);
+      delete window.getMountedComponents; 
     };
-  }, [timeout]);
+  }, []);
 }
 
 export function withMountedSources<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  options?: { timeout?: number },
+
 ): React.ComponentType<P> {
   return function WithMountedSources(props: P) {
-    useMountedSources(options);
+    useMountedSources();
     return <WrappedComponent {...props} />;
   };
 }
