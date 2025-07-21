@@ -66,8 +66,7 @@ function getMountedComponents():Record<string, Set<string>> {
   return sources;
 }
 
-// Hook version with timeout control
-export function useMountedSources(): void {
+export function useRegisterGetMountedComponents(): void {
   useEffect(() => {
     window.getMountedComponents = getMountedComponents;
     return () => {
@@ -76,12 +75,14 @@ export function useMountedSources(): void {
   }, []);
 }
 
-export function withMountedSources<P extends object>(
+export function withGetMountedSources<P extends object>(
   WrappedComponent: React.ComponentType<P>,
 
 ): React.ComponentType<P> {
   return function WithMountedSources(props: P) {
-    useMountedSources();
+    useRegisterGetMountedComponents();
     return <WrappedComponent {...props} />;
   };
 }
+
+export { useWhyDidYouUpdate, withWhyDidYouUpdate } from './useWhyDidYouUpdate';
