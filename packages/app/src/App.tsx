@@ -8,6 +8,7 @@ import {
   generateGraphFromChunkIdVsChunkMap,
 } from "@plugin/utils/generateGraphFromChunkIdVsChunkMap";
 import { addLazyLoadingInfo } from "./utils/graphUtils";
+import { ENABLE_INITIAL_MODULE_MULTI_SELECT_COMPONENT } from "./config";
 
 import { FileText } from "lucide-react";
 
@@ -86,7 +87,10 @@ function App() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Chunks</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {adaptedGraphData.nodes.filter(n => n.type === "chunk").length}
+                  {
+                    adaptedGraphData.nodes.filter(n => n.type === "chunk")
+                      .length
+                  }
                 </p>
               </div>
             </div>
@@ -100,7 +104,10 @@ function App() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Modules</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {adaptedGraphData.nodes.filter(n => n.type === "module").length}
+                  {
+                    adaptedGraphData.nodes.filter(n => n.type === "module")
+                      .length
+                  }
                 </p>
               </div>
             </div>
@@ -108,17 +115,19 @@ function App() {
         </div>
 
         {/* Mounted Modules */}
-        <div className="mb-8 w-full bg-white p-4 rounded-lg">
-          {/* Add your left pane content here */}
-          <h2 className="font-bold mb-4">Add Mounted Modules</h2>
-          <MultiSelect
-            items={items}
-            selectedItems={selectedItems}
-            onSelect={setSelectedItems}
-            minHeight={300}
-            maxHeight={600}
-          />
-        </div>
+        {ENABLE_INITIAL_MODULE_MULTI_SELECT_COMPONENT ? (
+          <div className="mb-8 w-full bg-white p-4 rounded-lg">
+            {/* Add your left pane content here */}
+            <h2 className="font-bold mb-4">Add Mounted Modules</h2>
+            <MultiSelect
+              items={items}
+              selectedItems={selectedItems}
+              onSelect={setSelectedItems}
+              minHeight={300}
+              maxHeight={600}
+            />
+          </div>
+        ) : null}
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6">

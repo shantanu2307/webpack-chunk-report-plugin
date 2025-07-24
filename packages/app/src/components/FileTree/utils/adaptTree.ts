@@ -34,13 +34,11 @@ export const adaptTree = ({
         matchesFilter = node.fileType === "chunk";
       } else if (filterBy === "module") {
         matchesFilter = node.fileType !== "chunk";
-      } else if(filterBy === "large") {
+      } else if (filterBy === "large") {
         matchesFilter = node.gzipSize > 1000;
-      }
-      else if(filterBy === "required"){
-        matchesFilter = !!node.isRequiredOnInitialLoad
-      }
-      else{
+      } else if (filterBy === "required") {
+        matchesFilter = !!node.isRequiredOnInitialLoad;
+      } else {
         matchesFilter = !node.isRequiredOnInitialLoad;
       }
     }

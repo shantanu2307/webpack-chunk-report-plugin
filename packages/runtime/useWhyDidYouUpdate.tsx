@@ -9,7 +9,7 @@ interface Changes<T> {
 
 export function useWhyDidYouUpdate<T extends Record<string, any>>(
   name: string,
-  props: T
+  props: T,
 ): void {
   const previousProps = useRef<T>();
 
@@ -51,11 +51,9 @@ export function useWhyDidYouUpdate<T extends Record<string, any>>(
   });
 }
 
-
-
 export function withWhyDidYouUpdate<P extends Record<string, any>>(
   WrappedComponent: ComponentType<P>,
-  componentName?: string
+  componentName?: string,
 ): ComponentType<P> {
   const displayName =
     componentName ||
@@ -70,4 +68,3 @@ export function withWhyDidYouUpdate<P extends Record<string, any>>(
   ComponentWithWhyDidYouUpdate.displayName = `withWhyDidYouUpdate(${displayName})`;
   return ComponentWithWhyDidYouUpdate;
 }
-

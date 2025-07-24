@@ -136,7 +136,7 @@ export const FileTree: React.FC<FileTreeProps> = memo(
           return <div style={style}>No node at index {index}</div>;
         }
 
-        const bgClass = node.isRequiredOnInitialLoad ? "bg-green-100": "";
+        const bgClass = node.isRequiredOnInitialLoad ? "bg-green-100" : "";
         const isSelected = selectedNodeId === node.id;
         const hasChildren = node.children && node.children.length > 0;
         const Icon = getFileIcon(node);
@@ -291,7 +291,9 @@ export const FileTree: React.FC<FileTreeProps> = memo(
                     <option value="commonjs">CommonJS</option>
                     <option value="large">Large Files (&gt;1KB Gzipped)</option>
                     <option value="required">Required in first load</option>
-                    <option value="non-required">Not required in first load</option>
+                    <option value="non-required">
+                      Not required in first load
+                    </option>
                   </select>
                   <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                 </div>

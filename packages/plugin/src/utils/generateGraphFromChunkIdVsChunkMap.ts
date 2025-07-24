@@ -7,7 +7,7 @@ export type GraphNode = {
   type: "module" | "chunk";
   data: Module | Chunk;
   dependencies: string[];
-  isRequiredOnInitialLoad?:boolean; 
+  isRequiredOnInitialLoad?: boolean;
 };
 
 export type GraphLink = {
@@ -224,7 +224,7 @@ export function generateGraphFromChunkIdVsChunkMap(
   });
 
   // Deduplicate dependencies
-  const graphNodes = _uniqBy(nodes, node=>node.id).map(node => ({
+  const graphNodes = _uniqBy(nodes, node => node.id).map(node => ({
     ...node,
     dependencies: _uniq(node.dependencies),
   }));

@@ -69,7 +69,7 @@ export function truncateText(text: string, maxLength: number): string {
 
 export const addLazyLoadingInfo = (
   graphData: GraphData,
-  selectedItems: string[]
+  selectedItems: string[],
 ): GraphData => {
   if (selectedItems.length === 0) {
     return graphData;
@@ -79,10 +79,13 @@ export const addLazyLoadingInfo = (
   const modules = graphData.nodes.filter(n => n.type === "module");
 
   // Create a map for faster access
-  const moduleMap: Record<string, GraphNode> = modules.reduce((acc, node) => {
-    acc[node.id] = node;
-    return acc;
-  }, {} as Record<string, GraphNode>);
+  const moduleMap: Record<string, GraphNode> = modules.reduce(
+    (acc, node) => {
+      acc[node.id] = node;
+      return acc;
+    },
+    {} as Record<string, GraphNode>,
+  );
 
   const updatedModuleMap: Record<string, GraphNode> = {};
   const seen = new Set<string>();
@@ -104,7 +107,7 @@ export const addLazyLoadingInfo = (
 
   // Merge original and updated module nodes
   const finalModuleNodes = modules.map(
-    node => updatedModuleMap[node.id] ?? node
+    node => updatedModuleMap[node.id] ?? node,
   );
 
   return {

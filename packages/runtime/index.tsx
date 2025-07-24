@@ -26,10 +26,7 @@ export type Source = {
 };
 
 // Utility function to walk the fiber tree
-function walkFiber(
-  fiber: Fiber,
-  sources: Record<string, Set<string>>
-): void {
+function walkFiber(fiber: Fiber, sources: Record<string, Set<string>>): void {
   if (!fiber) return;
 
   const source: Source | undefined = fiber.pendingProps?.[METADATA_KEY];
@@ -48,7 +45,7 @@ function walkFiber(
 }
 
 // Core function to get mounted component sources
-function getMountedComponents():Record<string, Set<string>> {
+function getMountedComponents(): Record<string, Set<string>> {
   const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
   if (!hook) return {};
 
@@ -70,14 +67,13 @@ export function useRegisterGetMountedComponents(): void {
   useEffect(() => {
     window.getMountedComponents = getMountedComponents;
     return () => {
-      delete window.getMountedComponents; 
+      delete window.getMountedComponents;
     };
   }, []);
 }
 
 export function withGetMountedSources<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-
 ): React.ComponentType<P> {
   return function WithMountedSources(props: P) {
     useRegisterGetMountedComponents();
@@ -85,4 +81,4 @@ export function withGetMountedSources<P extends object>(
   };
 }
 
-export { useWhyDidYouUpdate, withWhyDidYouUpdate } from './useWhyDidYouUpdate';
+export { useWhyDidYouUpdate, withWhyDidYouUpdate } from "./useWhyDidYouUpdate";

@@ -127,7 +127,7 @@ export const buildTree = (
             importedBy,
             isCommonJS: module.isCommonJS,
             fileType,
-            isRequiredOnInitialLoad: node.isRequiredOnInitialLoad, 
+            isRequiredOnInitialLoad: node.isRequiredOnInitialLoad,
           };
           parentFolder.children.push(fileNode);
         }

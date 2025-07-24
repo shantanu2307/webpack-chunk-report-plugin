@@ -22,9 +22,15 @@ export interface TreeNode {
   importedBy: string[];
   isCommonJS?: boolean;
   fileType?: string;
-  isRequiredOnInitialLoad?: boolean
+  isRequiredOnInitialLoad?: boolean;
 }
 
 export type SortOption = "name" | "statSize" | "gzipSize" | "parsedSize";
 
-export type FilterOption = "chunk" | "module" | "commonjs" | "large" | "required" | "not-required";
+export type FilterOption =
+  | "chunk"
+  | "module"
+  | "commonjs"
+  | "large"
+  | "required"
+  | "not-required";
